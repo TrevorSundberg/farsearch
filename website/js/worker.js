@@ -3,8 +3,9 @@ importScripts('parser.js')
 importScripts('interpreter.js')
 
 let sections
-let index
 const maxDivisions = 1000
+const maxResults = 100
+const maxOutput = 20
 
 String.prototype.hashCode = function () {
   var hash = 0, i, chr;
@@ -40,53 +41,65 @@ function colorLightFromNumber(x) {
 onmessage = e => {
   if (e.data.sections) {
     sections = e.data.sections
-    index = e.data.index
     return
   }
 
   const results = []
+  let tooManyResults = false
+
   for (const section of sections) {
     const result = interpret(e.data.root, section)
 
-    if (result.score) {
-      let index = 0
-      let html = '<hr>'
-      let nest = 0
-      const divisions = result.divisions
+    if (!result.score) {
+      continue
+    }
 
-      for (let i = 0; i < maxDivisions && i < divisions.length; ++i) {
-        const division = divisions[i]
-        html += section.text.substring(index, division.index).replace(/\n/g, '<br>')
-        index = division.index
-        if (division.type == divisionType.BEGIN) {
-          const hash = `${division.text}`.hashCode()
-          const dark = colorDarkFromNumber(hash)
-          const light = colorLightFromNumber(hash * 1257 + 34896)
-          html += `<span style="color: ${dark}; background-color: ${light}">`
-          ++nest
-        } else {
-          html += '</span>'
-          --nest
-        }
-      }
+    let index = 0
+    let html = '<hr>'
+    let nest = 0
+    const divisions = result.divisions
 
-      // This can only happen because we can exit the loop early.
-      while (nest > 0) {
+    for (let i = 0; i < maxDivisions && i < divisions.length; ++i) {
+      const division = divisions[i]
+      html += section.text.substring(index, division.index).replace(/\n/g, '<br>')
+      index = division.index
+      if (division.type == divisionType.BEGIN) {
+        const hash = `${division.text}`.hashCode()
+        const dark = colorDarkFromNumber(hash)
+        const light = colorLightFromNumber(hash * 1257 + 34896)
+        html += `<span style="color: ${dark}; background-color: ${light}">`
+        ++nest
+      } else {
         html += '</span>'
         --nest
       }
+    }
 
-      html += section.text.substring(index, section.text.length).replace(/\n/g, '<br>') + '<br>'
-      result.html = html
-      result.index = index
-      delete result.ranges
-      delete result.divisions
-      results.push(result)
+    // This can only happen because we can exit the loop early.
+    while (nest > 0) {
+      html += '</span>'
+      --nest
+    }
+
+    html += section.text.substring(index, section.text.length).replace(/\n/g, '<br>') + '<br>'
+    result.html = html
+    delete result.ranges
+    delete result.divisions
+    results.push(result)
+
+    if (results.length == maxResults) {
+      tooManyResults = true
+      break
     }
   }
+
   results.sort((a, b) => {
     return b.score - a.score
   })
 
-  postMessage({ results, version: e.data.version });
+  if (results.length > maxOutput) {
+    results.length = maxOutput
+  }
+
+  postMessage({ results, tooManyResults })
 }

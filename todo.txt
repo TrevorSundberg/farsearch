@@ -3,9 +3,7 @@ DONE - Profile the performance, which part is lagging?
 DONE - Render sections iteratively.
 DONE - Add debouncing to the input.
 
-Create an orchestrator that manages the workers.
-
-Instead of creating new workers, we cycle groups of workers and wait for the old ones to finish.
+Cache results from sub-expressions (they are one-to-one / pure).
 
 Command buffer that has which elements to create, or which text to place inside (oerformance).
 
