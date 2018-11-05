@@ -11,91 +11,99 @@ function escapeRegExp(string) {
 // An object with a 'score' and the found ranges of text.
 // A score of 0 means it failed. Higher is better.
 const interpret = (root, section) => {
-  const result = { score: 0, ranges: [], divisions: [] }
   if (!root) {
-    return result
+    return { score: 0, divisions: [] }
   }
 
-  let score = 1
-  let ranges = []
   const evaluate = (node) => {
     switch (node.type) {
       case tokenType.OR:
-        return evaluate(node.children[0]) || evaluate(node.children[1])
-      case tokenType.AND:
-        return evaluate(node.children[0]) && evaluate(node.children[1])
-      case tokenType.NOT:
-        return !evaluate(node.children[0])
-      case tokenType.MAYBE:
-        evaluate(node.children[0])
-        return true
-      case tokenType.RANGE:
-        // For now just evaluate the first SECTION argument.
-        return evaluate(node.children[0])
-      case tokenType.SECTION:
-        // If we're just looking for a part...
-        if (node.token.text.indexOf('.') == -1) {
-          // Fix this, we should parse section.id here.
-          if (section.id.startsWith(node.token.text)) {
-            ++score
-            return true
-          }
-        } else {
-          if (section.id === node.token.text) {
-            ++score
-            return true
+        {
+          const lhs = evaluate(node.children[0])
+          const rhs = evaluate(node.children[1])
+          if (lhs.score || rhs.score) {
+            return { score: lhs.score + rhs.score, divisions: lhs.divisions.concat(rhs.divisions) }
+          } else {
+            return { score: 0, divisions: [] }
           }
         }
-        return false
+      case tokenType.AND:
+        {
+          const lhs = evaluate(node.children[0])
+          const rhs = evaluate(node.children[1])
+          if (lhs.score && rhs.score) {
+            return { score: lhs.score + rhs.score, divisions: lhs.divisions.concat(rhs.divisions) }
+          } else {
+            return { score: 0, divisions: [] }
+          }
+        }
+      case tokenType.NOT:
+        {
+          const operand = evaluate(node.children[0])
+          if (!operand.score) {
+            return { score: 1, divisions: [] }
+          } else {
+            return { score: 0, divisions: [] }
+          }
+        }
+      case tokenType.MAYBE:
+        {
+          const operand = evaluate(node.children[0])
+          if (operand.score) {
+            return operand
+          }
+          return { score: 1, divisions: operand.divisions }
+        }
+      case tokenType.RANGE:
+        {
+          // For now just evaluate the first SECTION argument.
+          return evaluate(node.children[0])
+        }
+      case tokenType.SECTION:
+        {
+          // If we're just looking for a part...
+          if (node.token.text.indexOf('.') == -1) {
+            // Fix this, we should parse section.id here.
+            if (section.id.startsWith(node.token.text)) {
+              return { score: 1, divisions: [] }
+            }
+          } else {
+            if (section.id === node.token.text) {
+              return { score: 1, divisions: [] }
+            }
+          }
+          return { score: 0, divisions: [] }
+        }
       case tokenType.STRING:
       case tokenType.WORD:
       case tokenType.REGEX:
         {
-          let found = false
+          let score = 0
+          const divisions = []
           const regex = node.token.regex
+          const text = node.token.text
           regex.lastIndex = 0
           let match
           while (match = regex.exec(section.text)) {
-            const start = match.index
-            const end = start + match[0].length
-            ranges.push([start, end, node.token.text])
+            divisions.push({ index: match.index, type: divisionType.BEGIN, text })
+            divisions.push({ index: match.index + match[0].length, type: divisionType.END, text })
             ++score
-            found = true
           }
-          return found
+          return { score, divisions }
         }
     }
   }
 
-  if (evaluate(root)) {
-    for (const range of ranges) {
-      result.divisions.push({
-        index: range[0],
-        type: divisionType.BEGIN,
-        text: range[2]
-      })
-      result.divisions.push({
-        index: range[1],
-        type: divisionType.END,
-        text: range[2]
-      })
+  const result = evaluate(root)
+
+  // Sort all the ranges by the first index in the range.
+  result.divisions.sort((a, b) => {
+    const compare = a.index - b.index
+    if (compare !== 0) {
+      return compare
     }
-
-    // Sort all the ranges by the first index in the range.
-    ranges.sort((a, b) => {
-      return a[0] - b[0]
-    })
-    result.divisions.sort((a, b) => {
-      const compare = a.index - b.index
-      if (compare !== 0) {
-        return compare
-      }
-      return a.type - b.type
-    })
-
-    result.score = score
-    result.ranges = ranges
-  }
+    return a.type - b.type
+  })
 
   return result
 }

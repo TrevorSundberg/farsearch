@@ -2,14 +2,13 @@ DONE - Support ' and " and `.
 DONE - Profile the performance, which part is lagging?
 DONE - Render sections iteratively.
 DONE - Add debouncing to the input.
+DONE - Redo how score works - currently global, needs to be returned, not is incorrect.
+DONE - Not currently still highlights words (make ranges returned instead of global).
+DONE - Don't use short circuit for evaluation because it doesn't highlight!
 
 Cache results from sub-expressions (they are one-to-one / pure).
 
 Command buffer that has which elements to create, or which text to place inside (oerformance).
-
-Redo how score works - currently global, needs to be returned, not is incorrect.
-Not currently still highlights words (make ranges returned instead of global).
-Don't use short circuit for evaluation because it doesn't highlgiht!
 
 Red error highlight for CompileError (jquery ui) on the textbox.
 Error message popup for textbox.
