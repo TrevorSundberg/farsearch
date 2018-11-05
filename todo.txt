@@ -1,0 +1,50 @@
+DONE - Support ' and " and `
+DONE - Profile the performance, which part is lagging?
+DONE - Render sections iteratively.
+
+Create an orchestrator that manages the workers.
+
+Command buffer that has which elements to create, or which text to place inside (oerformance).
+
+Redo how score works - currently global, needs to be returned, not is incorrect.
+Not currently still highlights words (make ranges returned instead of global).
+Don't use short circuit for evaluation because it doesn't highlgiht!
+
+Red error highlight for CompileError (jquery ui) on the textbox.
+Error message popup for textbox.
+
+Syntax highlighting for textbox (or, and, not).
+
+Theme the page and make it look nice.
+Make the highlighted selections use rounded corners.
+Add a donate button and author notes.
+Mobile theme support.
+
+Pressing enter updates the url to add search (or clicking a link-me button).
+
+Separate out json file into title, sentences, and tables.
+Support searching part/subpart/section/sentance.
+
+Nice formatting for the input: first line bold, etc.
+Auto tab in (a), (ii), etc.
+Handle tables in the sections.
+
+Add a score specifier to the grammar that overwrites the score if successful.
+
+Pick colors based on word index, rather than hash (pick 16 good colors, then random after that).
+Add syntax for custom CSS when highlighting found words.
+
+Add an approximate search for works like gliding, glide, pre-flight, preflight, etc.
+
+Show an expandable part/subpart/section reference when the search is empty.
+
+Support some form of bookmarks.
+
+TTS reading integration (reads what you select when you click).
+
+Help
+ - Avoid small/common words (the, a, of).
+ - Be conscious of dashed words (right-of-way, runup/run-up, preflight/pre-flight).
+ - Some numbers have commas, (3,000) some are just written as 3000.
+ - Symbols and entire meaning.
+ - Example searches.

@@ -1,0 +1,21 @@
+{
+  "name": "farsearch",
+  "version": "1.0.0",
+  "description": "A tool for quickly searching the Federal Aviation Regulations.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "far",
+    "search"
+  ],
+  "author": "Trevor Sundberg",
+  "license": "ISC",
+  "dependencies": {
+    "escape-html": "^1.0.3",
+    "traverse": "^0.6.6",
+    "uglify-js": "^3.4.9",
+    "xml2js": "^0.4.19"
+  }
+}
