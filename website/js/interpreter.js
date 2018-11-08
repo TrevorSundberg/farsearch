@@ -3,11 +3,6 @@ const divisionType = {
   END: 1,
 }
 
-function escapeRegExp(string) {
-  // $& means the whole matched string
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 // An object with a 'score' and the found ranges of text.
 // A score of 0 means it failed. Higher is better.
 const interpret = (root, section) => {
@@ -15,65 +10,83 @@ const interpret = (root, section) => {
     return { score: 0, divisions: [] }
   }
 
-  const evaluate = (node) => {
+  if (!section.cache) {
+    section.cache = {}
+  }
+
+  const evaluate = node => {
+    let result = section.cache[node.cacheConstant]
+    if (result !== undefined) {
+      return result
+    }
+
     switch (node.type) {
       case tokenType.OR:
         {
           const lhs = evaluate(node.children[0])
           const rhs = evaluate(node.children[1])
           if (lhs.score || rhs.score) {
-            return { score: lhs.score + rhs.score, divisions: lhs.divisions.concat(rhs.divisions) }
+            result = { score: lhs.score + rhs.score, divisions: lhs.divisions.concat(rhs.divisions) }
           } else {
-            return { score: 0, divisions: [] }
+            result = { score: 0, divisions: [] }
           }
         }
+        break
       case tokenType.AND:
         {
           const lhs = evaluate(node.children[0])
           const rhs = evaluate(node.children[1])
           if (lhs.score && rhs.score) {
-            return { score: lhs.score + rhs.score, divisions: lhs.divisions.concat(rhs.divisions) }
+            result = { score: lhs.score + rhs.score, divisions: lhs.divisions.concat(rhs.divisions) }
           } else {
-            return { score: 0, divisions: [] }
+            result = { score: 0, divisions: [] }
           }
         }
+        break
       case tokenType.NOT:
         {
           const operand = evaluate(node.children[0])
           if (!operand.score) {
-            return { score: 1, divisions: [] }
+            result = { score: 1, divisions: [] }
           } else {
-            return { score: 0, divisions: [] }
+            result = { score: 0, divisions: [] }
           }
         }
+        break
       case tokenType.MAYBE:
         {
           const operand = evaluate(node.children[0])
           if (operand.score) {
-            return operand
+            result = operand
+          } else {
+            result = { score: 1, divisions: operand.divisions }
           }
-          return { score: 1, divisions: operand.divisions }
         }
+        break
       case tokenType.RANGE:
         {
           // For now just evaluate the first SECTION argument.
-          return evaluate(node.children[0])
+          result = evaluate(node.children[0])
         }
+        break
       case tokenType.SECTION:
         {
           // If we're just looking for a part...
           if (node.token.text.indexOf('.') == -1) {
             // Fix this, we should parse section.id here.
             if (section.id.startsWith(node.token.text)) {
-              return { score: 1, divisions: [] }
+              result = { score: 1, divisions: [] }
             }
           } else {
             if (section.id === node.token.text) {
-              return { score: 1, divisions: [] }
+              result = { score: 1, divisions: [] }
             }
           }
-          return { score: 0, divisions: [] }
+          if (!result) {
+            result = { score: 0, divisions: [] }
+          }
         }
+        break
       case tokenType.STRING:
       case tokenType.WORD:
       case tokenType.REGEX:
@@ -89,9 +102,13 @@ const interpret = (root, section) => {
             divisions.push({ index: match.index + match[0].length, type: divisionType.END, text })
             ++score
           }
-          return { score, divisions }
+          result = { score, divisions }
         }
+        break
     }
+
+    section.cache[node.cacheConstant] = result
+    return result
   }
 
   const result = evaluate(root)

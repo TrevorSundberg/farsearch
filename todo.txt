@@ -5,10 +5,7 @@ DONE - Add debouncing to the input.
 DONE - Redo how score works - currently global, needs to be returned, not is incorrect.
 DONE - Not currently still highlights words (make ranges returned instead of global).
 DONE - Don't use short circuit for evaluation because it doesn't highlight!
-
-Cache results from sub-expressions (they are one-to-one / pure).
-
-Command buffer that has which elements to create, or which text to place inside (oerformance).
+DONE - Try caching results from sub-expressions (they are one-to-one / pure).
 
 Red error highlight for CompileError (jquery ui) on the textbox.
 Error message popup for textbox.
@@ -16,6 +13,7 @@ Error message popup for textbox.
 Syntax highlighting for textbox (or, and, not).
 
 Theme the page and make it look nice.
+Always have a scroll-bar so we can avoid wrapping changing.
 Make the highlighted selections use rounded corners.
 Add a donate button and author notes.
 Mobile theme support.

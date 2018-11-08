@@ -114,5 +114,21 @@ const parse = function (tokens) {
     throw new CompileError('Unexpected tokens at the end of the input')
   }
 
+  if (root) {
+    const computeCacheConstants = node => {
+      const regex = node.token ? node.token.regex : ''
+      let cacheConstant = `${node.type}_${regex}[`
+      if (node.children) {
+        for (const child of node.children) {
+          cacheConstant += computeCacheConstants(child)
+        }
+      }
+      cacheConstant += ']'
+      node.cacheConstant = cacheConstant
+      return cacheConstant
+    }
+    computeCacheConstants(root)
+  }
+
   return root
 }

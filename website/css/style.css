@@ -2,3 +2,7 @@
   font-weight: bold;
   background-color: lightpink
 }
+
+.invalid {
+  outline: 2px solid red
+}

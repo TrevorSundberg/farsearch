@@ -1,6 +1,8 @@
-let results = []
+let output = []
 let searchQuery
 let outputQuery
+let displayRequest = null
+const maxHtmlPerFrame = 2000
 
 const worker = new Worker('js/worker.js')
 
@@ -11,33 +13,52 @@ $(function () {
   $.getJSON('../json/data.json', function (data) {
     worker.postMessage({ sections: data })
     worker.onmessage = e => {
-      results = e.data.results
+      output = e.data.output
       outputQuery.empty()
 
-      const displayNextResult = (i) => {
-        if (i >= results.length) {
+      if (displayRequest !== null) {
+        window.cancelAnimationFrame(displayRequest)
+        displayRequest = null
+      }
+
+      const displayNext = i => {
+        if (i >= output.length) {
           return
         }
-        const html = results[i].html
-        outputQuery.append(html)
+
+        // Display as much html as we can this frame without lagging.
+        let totalHtml = 0
+        while (i < output.length) {
+          const html = output[i]
+          totalHtml += html.length
+          outputQuery.append(html)
+          ++i
+
+          if (totalHtml > maxHtmlPerFrame) {
+            break
+          }
+        }
 
         // Call this again next frame.
-        setTimeout(() => displayNextResult(i + 1), 0)
+        displayRequest = window.requestAnimationFrame(() => displayNext(i), 0)
       }
 
       // Display the first result (the rest will come in gradually).
-      displayNextResult(0)
+      displayNext(0)
     }
 
     searchQuery.on('input', function () {
       const search = $(this).val()
+
       let root = null
       try {
         const tokens = tokenize(search)
         root = parse(tokens)
+        $(this).removeClass('invalid')
       } catch (error) {
         if (error instanceof CompileError) {
           outputQuery.text(error.message)
+          $(this).addClass('invalid')
         } else {
           throw error
         }

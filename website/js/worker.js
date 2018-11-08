@@ -54,37 +54,7 @@ onmessage = e => {
       continue
     }
 
-    let index = 0
-    let html = '<hr>'
-    let nest = 0
-    const divisions = result.divisions
-
-    for (let i = 0; i < maxDivisions && i < divisions.length; ++i) {
-      const division = divisions[i]
-      html += section.text.substring(index, division.index).replace(/\n/g, '<br>')
-      index = division.index
-      if (division.type == divisionType.BEGIN) {
-        const hash = `${division.text}`.hashCode()
-        const dark = colorDarkFromNumber(hash)
-        const light = colorLightFromNumber(hash * 1257 + 34896)
-        html += `<span style="color: ${dark}; background-color: ${light}">`
-        ++nest
-      } else {
-        html += '</span>'
-        --nest
-      }
-    }
-
-    // This can only happen because we can exit the loop early.
-    while (nest > 0) {
-      html += '</span>'
-      --nest
-    }
-
-    html += section.text.substring(index, section.text.length).replace(/\n/g, '<br>') + '<br>'
-    result.html = html
-    delete result.ranges
-    delete result.divisions
+    result.section = section
     results.push(result)
 
     if (results.length == maxResults) {
@@ -101,5 +71,50 @@ onmessage = e => {
     results.length = maxOutput
   }
 
-  postMessage({ results, tooManyResults })
+  const output = []
+  for (const result of results) {
+    const section = result.section
+    const divisions = result.divisions
+    let index = 0
+    let nest = 0
+    output.push('<hr>')
+
+    let str = ''
+
+    for (let i = 0; i < maxDivisions && i < divisions.length; ++i) {
+      const division = divisions[i]
+      const text = section.text.substring(index, division.index).replace(/\n/g, '<br>')
+      if (nest) {
+        str += text
+      } else {
+        output.push(text)
+      }
+      index = division.index
+      if (division.type == divisionType.BEGIN) {
+        const hash = `${division.text}`.hashCode()
+        const dark = colorDarkFromNumber(hash)
+        const light = colorLightFromNumber(hash * 1257 + 34896)
+        str += `<span style="color: ${dark}; background-color: ${light}">`
+        ++nest
+      } else {
+        str += '</span>'
+        --nest
+
+        if (nest == 0) {
+          output.push(str)
+          str = ''
+        }
+      }
+    }
+
+    // This can only happen because we can exit the loop early.
+    str += '</span>'.repeat(nest)
+    if (str.length !== 0) {
+      output.push(str)
+    }
+
+    output.push(section.text.substring(index, section.text.length).replace(/\n/g, '<br>') + '<br>')
+  }
+
+  postMessage({ output, tooManyResults })
 }

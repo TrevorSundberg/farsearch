@@ -33,6 +33,11 @@ const tokenType = {
   WORD: 'word'
 }
 
+function escapeRegExp(string) {
+  // $& means the whole matched string
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 const tokenize = function (inputString) {
   const tokens = []
   const matches = inputString.match(tokenRegex)
@@ -42,7 +47,8 @@ const tokenize = function (inputString) {
 
   for (const match of matches) {
     const token = {
-      text: match
+      text: match,
+      regex: new RegExp(escapeRegExp(match), 'ig')
     }
 
     let type
@@ -99,7 +105,6 @@ const tokenize = function (inputString) {
             token.regex = new RegExp(regex, flags.includes('g') ? flags : flags + 'g')
           }
           catch (error) {
-            token.regex = /invalid/g
             throw new CompileError(error.message)
           }
         }
@@ -108,7 +113,6 @@ const tokenize = function (inputString) {
 
     if (!type) {
       type = tokenType.WORD
-      token.regex = new RegExp(escapeRegExp(token.text), 'ig')
     }
 
     token.type = type
